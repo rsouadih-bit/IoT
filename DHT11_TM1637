@@ -1,0 +1,79 @@
+#include <DHT.h>
+#include <TM1637Display.h>
+
+// Pins pour le TM1637
+#define CLK 22
+#define DIO 21
+
+// Pin et type pour le DHT11
+#define DHTPIN 4
+#define DHTTYPE DHT11
+
+// Initialisation des objets
+TM1637Display display(CLK, DIO);
+DHT dht(DHTPIN, DHTTYPE);
+
+// Signification des segments pour former le symbole 'C' (Celcius) et 'o' (degré)
+const uint8_t SYMB_CELCIUS[] = {
+  SEG_A | SEG_B | SEG_F | SEG_G, // Symbole degré °
+  SEG_A | SEG_D | SEG_E | SEG_F  // Lettre C
+};
+
+// Signification des segments pour former la lettre 'H' (Humidité)
+const uint8_t SYMB_HUMIDITY[] = {
+  SEG_B | SEG_C | SEG_E | SEG_F | SEG_G // Lettre H
+};
+
+void setup() {
+  Serial.begin(115200);
+  
+  dht.begin();
+  
+  display.setBrightness(0x0f); // Luminosité maximale (0x00 à 0x0f)
+  display.clear();
+}
+
+void loop() {
+  // Lecture des capteurs
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+
+  // Vérification si la lecture a échoué
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Erreur de lecture du DHT11 !");
+    // Affiche "Err" sur le TM1637
+    uint8_t errData[] = {
+      SEG_A | SEG_D | SEG_E | SEG_F | SEG_G, // E
+      SEG_E | SEG_G,                         // r
+      SEG_E | SEG_G                          // r
+    };
+    display.setSegments(errData, 3, 1);
+    delay(2000);
+    return;
+  }
+
+  int tempInt = (int)t;
+  int humInt = (int)h;
+
+  Serial.print("Température : ");
+  Serial.print(tempInt);
+  Serial.print(" °C | Humidité : ");
+  Serial.print(humInt);
+  Serial.println(" %");
+
+  // --- 1. AFFICHAGE DE LA TEMPÉRATURE (ex: "25°C") ---
+  display.clear();
+  // Affiche la valeur de température sur les 2 premiers digits
+  display.showNumberDec(tempInt, false, 2, 0); 
+  // Affiche "°C" sur les 2 derniers digits
+  display.setSegments(SYMB_CELCIUS, 2, 2); 
+  delay(3000); // Reste affiché 3 secondes
+
+  // --- 2. AFFICHAGE DE L'HUMIDITÉ (ex: "60 H") ---
+  display.clear();
+  // Affiche la valeur d'humidité sur les 2 premiers digits
+  display.showNumberDec(humInt, false, 2, 0); 
+  // Affiche "H" sur le dernier digit
+  display.setSegments(SYMB_HUMIDITY, 1, 3); 
+  delay(3000); // Reste affiché 3 secondes
+}
