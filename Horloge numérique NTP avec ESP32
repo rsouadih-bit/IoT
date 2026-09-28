@@ -20,7 +20,7 @@ TM1637Display display(CLK, DIO);
 
 // Timezone (Lisbon / Portugal)
 // Change if needed - See list of timezones strings: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
-const char* TZ_INFO = "WET0WEST,M3.5.0/1,M10.5.0";
+const char* TZ_INFO = "CET-1CEST,M3.5.0,M10.5.0/3";
 
 // Init Wifi
 void initWiFi() {
